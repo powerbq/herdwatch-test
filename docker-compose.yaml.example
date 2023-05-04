@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+    database:
+      image: percona
+      environment:
+        MYSQL_DATABASE: test
+        MYSQL_USER: test
+        MYSQL_PASSWORD: test
+        MYSQL_ROOT_PASSWORD: test
+      volumes:
+        - ./var/lib/mysql:/var/lib/mysql
+      ports:
+        - 127.0.0.1:3306:3306
+
+    server:
+      build:
+        context: server
+        args:
+            OPCODE_ENABLED: 1
+      image: server
+      environment:
+        - APP_ENV=prod
+        - DATABASE_URL=mysql://test:test@database:3306/test?serverVersion=8.0.32&charset=utf8mb4
+      volumes:
+        - ./server/config:/var/www/config
+        - ./server/migrations:/var/www/migrations
+        - ./server/src:/var/www/src
+        - ./var/log/server:/var/www/var/log
+
+    client:
+      build:
+        context: client
+      image: client
+      environment:
+        - APP_ENV=prod
+        - API_URL_PREFIX=http://server/
+      volumes:
+        - ./client/config:/var/www/config
+        - ./client/src:/var/www/src
+        - ./var/log/client:/var/www/var/log
